@@ -237,14 +237,13 @@ and
 (
   select
     icustay_id, linkorderid
-    , max(rate) as vaso_rate
-    , sum(amount) as vaso_amount
-    , min(starttime) as starttime
-    , max(endtime) as endtime
+    , CASE WHEN valueuom = 'units/min' THEN rate*60.0 ELSE rate END as vaso_rate
+    , amount as vaso_amount
+    , starttime
+    , endtime
   from inputevents_mv
   where itemid = 222315 -- vasopressin
   and statusdescription != 'Rewritten' -- only valid orders
-  group by icustay_id, linkorderid
 )
 -- now assign this data to every hour of the patient's stay
 -- vaso_amount for carevue is not accurate

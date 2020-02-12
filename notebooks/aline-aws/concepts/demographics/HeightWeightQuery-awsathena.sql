@@ -6,8 +6,7 @@
 -- Created by: Erin Hong, Alistair Johnson
 -- ------------------------------------------------------------------
 
-DROP MATERIALIZED VIEW IF EXISTS heightweight CASCADE;
-CREATE MATERIALIZED VIEW heightweight
+CREATE TABLE DATABASE.heightweight
 AS
 WITH FirstVRawData AS
   (SELECT c.charttime,
@@ -28,7 +27,7 @@ WITH FirstVRawData AS
         THEN c.valuenum * 2.54
       ELSE c.valuenum
     END AS valuenum
-  FROM chartevents c
+  FROM DATABASE.chartevents c
   WHERE c.valuenum   IS NOT NULL
   -- exclude rows marked as error
   AND c.error IS DISTINCT FROM 1
@@ -38,13 +37,13 @@ WITH FirstVRawData AS
     920, 1394, 4187, 3486,                    -- Height inches
     3485, 4188                                -- Height cm
     -- Metavision
-    , 226707 -- Height, cm
+    , 226707 -- Height (measured in inches)
     , 226512 -- Admission Weight (Kg)
 
     -- note we intentionally ignore the below ITEMIDs in metavision
     -- these are duplicate data in a different unit
     -- , 226531 -- Admission Weight (lbs.)
-    -- , 226707 -- Height (inches)
+    -- , 226730 -- Height (cm)
     )
   AND c.valuenum <> 0 )
     ) )
@@ -88,39 +87,12 @@ WITH FirstVRawData AS
 --select * from PivotParameters
 SELECT f.icustay_id,
   f.subject_id,
-  ROUND( cast(f.height_first as numeric), 2) AS height_first,
-  ROUND(cast(f.height_min as numeric),2) AS height_min,
-  ROUND(cast(f.height_max as numeric),2) AS height_max,
-  ROUND(cast(f.weight_first as numeric), 2) AS weight_first,
-  ROUND(cast(f.weight_min as numeric), 2)   AS weight_min,
-  ROUND(cast(f.weight_max as numeric), 2)   AS weight_max
+  ROUND( cast(f.height_first as double), 2) AS height_first,
+  ROUND(cast(f.height_min as double),2) AS height_min,
+  ROUND(cast(f.height_max as double),2) AS height_max,
+  ROUND(cast(f.weight_first as double), 2) AS weight_first,
+  ROUND(cast(f.weight_min as double), 2)   AS weight_min,
+  ROUND(cast(f.weight_max as double), 2)   AS weight_max
 
 FROM PivotParameters f
 ORDER BY subject_id, icustay_id;
-
---COMMENT ON MATERIALIZED VIEW icustay_detail IS
--- '
---   Expands the table "ICUSTAYEVENTS" to show:
--- ​
---      +  Each ICU stay is order by the column HOSPITAL_ICUSTAY_SEQ per
---         hospitalization
---      +  Each ICU stay is order by the column ICUSTAY_SEQ
---      +  The first and last ICU stays per hospitalization
---      +  First/last hospitalizations
---      +  The icu expiration flag is assigned to the last icu_stay in the last
---         hospitalization.
---  ';
-
---COMMENT ON COLUMN mimic2v26.icustay_detail.subject_id is 'Unique subject identifier';
---COMMENT ON COLUMN mimic2v26.icustay_detail.gender is 'Subject''s gender "M" or "F"';
---COMMENT ON COLUMN mimic2v26.icustay_detail.dob is 'Subject''s date of birth';
---COMMENT ON COLUMN mimic2v26.icustay_detail.icustay_id is 'Unique ICU stay identifier';
---COMMENT ON COLUMN mimic2v26.icustay_detail.height is 'The first entered height of the patient';
---COMMENT ON COLUMN mimic2v26.icustay_detail.weight_first is 'The first entered weight of the patient';
---COMMENT ON COLUMN mimic2v26.icustay_detail.weight_max is 'The maximum entered weight of the patient';
---COMMENT ON COLUMN mimic2v26.icustay_detail.weight_min is 'The minimum entered weight of the patient';
-
-
---execute DBMS_SNAPSHOT.REFRESH( 'icustay_detail','c');
---execute DBMS_SNAPSHOT.REFRESH( 'd_chartitems_detail','c');
---execute DBMS_SNAPSHOT.REFRESH( 'icustay_days','c');

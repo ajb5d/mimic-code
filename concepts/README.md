@@ -4,6 +4,8 @@ This folder contains scripts to generate materialized views in a PostgreSQL data
 
 Concepts are categorized into folders if possible, otherwise they remain in the top-level directory.
 
+The `make-concepts.sql` file can be used to build all concepts in a PostgreSQL database. It uses relative paths to call the other SQL scripts, so you need to execute the script from this folder.
+
 # Subfolders
 
 ## comorbidity
